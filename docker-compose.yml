@@ -1,0 +1,93 @@
+version: "3.9"
+
+services:
+
+  api-gateway-service:
+    build: 
+      context: ../kissan-cloud-gateway
+    ports:
+      - "8080:8080"
+    deploy:
+        resources:
+          limits:
+            memory: 350M 
+
+  eureka-service:
+    build: 
+      context: ../eureka-service
+    # ports:
+    #   - "8761:8761"
+    deploy:
+        resources:
+          limits:
+            memory: 350M  
+
+  farmer-crop-service:
+    build: 
+      context: ../farmer-crop
+    depends_on:
+      mysql:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 350M
+
+  farmer-composite-service:
+    build: 
+      context: ../jai-kissan-composite
+    # Not required when API gateway is configured
+    # ports:
+    #   - "8080:8080"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 350M
+
+  farmer-fci-service:
+    build: 
+      context: ../farmer-fci
+    depends_on: 
+      - mongodb
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 350M
+
+  # $ mongo
+  mongodb:
+    image: mongo
+    ports:
+      - "27017:27017"
+    command: mongod
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 350M
+
+  # $ mysql -uroot -h127.0.0.1 -p
+  mysql:
+    image: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpwd
+      - MYSQL_DATABASE=farmer_crop_db
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=pwd
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-uuser", "-ppwd", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 350M
+   
+   
